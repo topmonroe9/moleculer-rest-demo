@@ -1,40 +1,82 @@
 "use strict";
+const DbService = require("moleculer-db");
+const MongooseAdapter = require("moleculer-db-adapter-mongoose");
+const mongoose = require("mongoose");
+const _ = require("lodash");
 
 module.exports = {
 	name: "posts",
+	mixins: [DbService],
+	adapter: new MongooseAdapter("mongodb://localhost/moleculer-demo",
+		{ useUnifiedTopology: true }
+	),
+	model: mongoose.model("Post", mongoose.Schema({
+		title: { type: String, required: true },
+		content: { type: String, required: true },
+		created: { type: Date },
+		updated: { type: Date }
+	})),
 
 	actions: {
-		getPosts: {
+		list: {
 			rest: {
 				method: "GET",
 				path: "/"
 			},
 			async handler() {
-				return "posts will be here";
+
+				const posts = await this.adapter.find();
+
+
+				return _.orderBy(posts,[ "created" ], [ "desc" ] );;
 			}
 		},
-		createPost: {
+		create: {
 			rest: "POST /",
+			params: {
+				title: { type: "string", min: 1, max: 35 },
+				content: { type: "string", min: 1 }
+			},
 			async handler(ctx) {
-				return "posts will be created with this method";
+				// should be Joi validator
+				const post = ctx.params;
+
+				// mongoose object should be created with new Post,
+				// todo get Post object from model somehow
+				post.created = new Date(Date.now());
+				await this.adapter.insert(post);
+
+				return post;
 			}
 		},
-		editPost: {
+		update: {
 			rest: "PUT /:id",
-			params: {
-				id: "string"
-			},
 			async handler(ctx) {
-				return "post with id" + ctx.params.id + "is being edited";
+				// just simple security check. Joi should be used here
+				if (!ctx.params.title && !ctx.params.content)
+					return "At least one item should be in body to use this method";
+
+				const post = await this.adapter.findById(ctx.params.id);
+				if (!post) return "no posts found";
+
+				// Object assign method should be used here for bigger amount of content
+				if (ctx.params.title) post.title = ctx.params.title;
+				if (ctx.params.content) post.title = ctx.params.content;
+				post.updated = new Date(Date.now());
+
+				await post.save();
+
+				return post;
 			}
 		},
-		deletePost: {
+		delete: {
 			rest: "DELETE /:id",
-			params: {
-				id: "string"
-			},
 			async handler(ctx) {
-				return "deleting post id" + ctx.params.id;
+				if ( await this.adapter.findById(ctx.params.id) )
+					return "Post not found";
+
+				await this.adapter.removeById(ctx.params.id);
+				return "post deleted successfully";
 			}
 		}
 	}

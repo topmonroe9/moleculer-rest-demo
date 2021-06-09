@@ -17,23 +17,13 @@ services:
     networks:
       - internal
 
-  greeter:
+  posts:
     build:
       context: .
     image: rest-demo
     env_file: docker-compose.env
     environment:
-      SERVICES: greeter
-    networks:
-      - internal
-
-  products:
-    build:
-      context: .
-    image: rest-demo
-    env_file: docker-compose.env
-    environment:
-      SERVICES: products
+      SERVICES: posts
     depends_on:
       - mongo
     networks:
