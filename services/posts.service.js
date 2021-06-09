@@ -61,7 +61,7 @@ module.exports = {
 
 				// Object assign method should be used here for bigger amount of content
 				if (ctx.params.title) post.title = ctx.params.title;
-				if (ctx.params.content) post.title = ctx.params.content;
+				if (ctx.params.content) post.content = ctx.params.content;
 				post.updated = new Date(Date.now());
 
 				await post.save();
