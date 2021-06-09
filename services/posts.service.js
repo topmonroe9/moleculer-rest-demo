@@ -7,7 +7,7 @@ const _ = require("lodash");
 module.exports = {
 	name: "posts",
 	mixins: [DbService],
-	adapter: new MongooseAdapter("mongodb://localhost/moleculer-demo",
+	adapter: new MongooseAdapter(process.env.MONGO_URI,
 		{ useUnifiedTopology: true }
 	),
 	model: mongoose.model("Post", mongoose.Schema({
